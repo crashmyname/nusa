@@ -1,0 +1,43 @@
+<?php
+require 'vendor/autoload.php';
+
+use App\Core\MigrationGenerator;
+use App\Core\MigrationRunner;
+use App\Core\Database;
+use App\Core\ModuleGenerator;
+use Database\Seeders\DatabaseSeeder;
+
+// init
+require 'bootstrap/app.php';
+Database::init();
+
+$command = $argv[1] ?? null;
+$name = $argv[2] ?? null;
+
+switch ($command) {
+    case 'migrate':
+        (new MigrationRunner())->run();
+        break;
+    case 'db:seed':
+        require 'database/seeders/DatabaseSeeder.php';
+        (new DatabaseSeeder())->run();
+        break;
+    case 'make:module':
+        if (!$name) {
+            echo "Module name required\n";
+            exit;
+        }
+
+        ModuleGenerator::make($name);
+        break;
+    case 'make:migration':
+        if (!$name) {
+            echo "Migration name required\n";
+            exit;
+        }
+
+        MigrationGenerator::make($name);
+        break;
+    default:
+        echo "Command not found";
+}
