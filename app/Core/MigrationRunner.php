@@ -7,11 +7,30 @@ class MigrationRunner
 
     public function run()
     {
-        foreach (glob($this->path . '/*.php') as $file) {
-            $migration = require $file;
-            $migration->up();
+        $files = glob($this->path . '/*.php');
+        sort($files);
 
-            echo "Migrated: " . basename($file) . PHP_EOL;
+        foreach ($files as $file) {
+
+            echo "Running: " . basename($file) . PHP_EOL;
+
+            try {
+                $migration = require $file;
+
+                if (!is_object($migration)) {
+                    throw new \Exception("Migration is not object");
+                }
+
+                $migration->up();
+
+                echo "Migrated: " . basename($file) . PHP_EOL;
+
+            } catch (\Throwable $e) {
+                echo "ERROR in " . basename($file) . PHP_EOL;
+                echo $e->getMessage() . PHP_EOL;
+
+                break;
+            }
         }
     }
 }

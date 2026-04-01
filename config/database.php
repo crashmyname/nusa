@@ -24,6 +24,9 @@ return [
             'password' => env('DB_PASSWORD'),
             'charset' => 'utf8mb4',
             'prefix' => '',
+            'options' => [
+                PDO::ATTR_PERSISTENT => true,
+            ],
         ],
     ],
 ];

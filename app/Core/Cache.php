@@ -32,11 +32,12 @@ class Cache
     {
         $data = self::get($key);
 
-        if ($data) {
+        if ($data !== null) {
             return json_decode($data, true);
         }
 
         $data = $callback();
+
         self::set($key, $data, $ttl);
 
         return $data;

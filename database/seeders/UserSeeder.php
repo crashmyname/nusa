@@ -9,6 +9,6 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
-        UserFactory::make(500000);
+        UserFactory::make(100);
     }
 }

@@ -4,12 +4,15 @@ use App\Core\Config;
 use App\Core\Database;
 use App\Helpers\Route;
 use App\Middlewares\AuthMiddleware;
+use App\Middlewares\JwtMiddleware;
 use Dotenv\Dotenv;
 use Whoops\Run;
 use Whoops\Handler\PrettyPageHandler;
 
-$dotenv = Dotenv::createImmutable(__DIR__.'/../');
-$dotenv->load();
+if (!isset($_ENV['APP_ENV'])) {
+    $dotenv = Dotenv::createImmutable(__DIR__.'/../');
+    $dotenv->load();
+}
 
 if (env('APP_DEBUG', false)) {
     $whoops = new Run;
@@ -17,7 +20,13 @@ if (env('APP_DEBUG', false)) {
     $whoops->register();
 }
 
-Config::load(__DIR__.'/../config');
+$configCache = __DIR__.'/../storage/cache/config.php';
+
+if (file_exists($configCache)) {
+    Config::set(require $configCache);
+} else {
+    Config::load(__DIR__.'/../config');
+}
 
 $app = new Application();
 

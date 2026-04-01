@@ -7,6 +7,13 @@ class MiddlewarePipeline
 
     public function add($middleware)
     {
+        if (is_string($middleware)) {
+            $mapped = Config::get("middleware.$middleware");
+
+            if ($mapped) {
+                $middleware = $mapped;
+            }
+        }
         $this->middlewares[] = $middleware;
     }
 

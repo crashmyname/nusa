@@ -8,9 +8,9 @@ return new class extends Migration {
     {
         $this->schema()->create('roles', function ($table) {
             $table->id('role_id');
-            $table->foreginId('company_id');
+            $table->foreignId('company_id');
             $table->string('name');
-            $table->bool('is_super_admin');
+            $table->boolean('is_super_admin');
             $table->timestamps();
             $table->softDeletes();
         });

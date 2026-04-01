@@ -9,15 +9,42 @@ class Router
     protected $routeMiddlewares = [];
     protected $currentMiddlewares = [];
     protected $currentGroupPrefix = '';
+    public array $registeredRoutes = [];
 
     public function get($uri, $action)
     {
         $this->addRoute('GET', $uri, $action);
+        return $this;
     }
 
     public function post($uri, $action)
     {
         $this->addRoute('POST', $uri, $action);
+        return $this;
+    }
+    
+    public function put($uri, $action)
+    {
+        $this->addRoute('PUT', $uri, $action);
+        return $this;
+    }
+
+    public function patch($uri, $action)
+    {
+        $this->addRoute('PATCH', $uri, $action);
+        return $this;
+    }
+
+    public function delete($uri, $action)
+    {
+        $this->addRoute('DELETE', $uri, $action);
+        return $this;
+    }
+
+    public function options($uri, $action)
+    {
+        $this->addRoute('OPTIONS', $uri, $action);
+        return $this;
     }
 
     public function group($prefix, $callback)
@@ -35,7 +62,7 @@ class Router
     {
         $uri = ($this->currentGroupPrefix ?? '') . $uri;
 
-        $this->routes[] = [
+        $route = [
             $method,
             $uri,
             [
@@ -43,6 +70,10 @@ class Router
                 'middlewares' => $this->currentMiddlewares ?? []
             ]
         ];
+
+        $this->routes[] = $route;
+
+        $this->registeredRoutes[] = $route;
 
         $this->currentMiddlewares = [];
     }
@@ -57,14 +88,22 @@ class Router
         return $this;
     }
 
+    public function setCachedRoutes(array $routes)
+    {
+        $this->routes = $routes;
+    }
+
     public function dispatch()
     {
-        $dispatcher = FastRoute\simpleDispatcher(function(FastRoute\RouteCollector $r) {
+        $dispatcher = FastRoute\cachedDispatcher(function(FastRoute\RouteCollector $r) {
             foreach ($this->routes as $route) {
                 [$method, $uri, $handler] = $route;
                 $r->addRoute($method, $uri, $handler);
             }
-        });
+        }, [
+            'cacheFile' => __DIR__ . '/../../storage/cache/fast_route.php',
+            'cacheDisabled' => !env('ROUTE_CACHE', false),
+        ]);
 
         $httpMethod = $_SERVER['REQUEST_METHOD'];
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -116,11 +155,38 @@ class Router
 
                     if (is_array($action)) {
                         [$controller, $method] = $action;
-                        return (new $controller)->$method($vars);
+                        return $this->resolve($controller)->$method($vars);
                     }
 
                     return call_user_func($action, $vars);
                 });
         }
+    }
+
+    protected function resolve($class)
+    {
+        $reflection = new \ReflectionClass($class);
+
+        $constructor = $reflection->getConstructor();
+
+        if (!$constructor) {
+            return new $class;
+        }
+
+        $params = $constructor->getParameters();
+
+        $dependencies = [];
+
+        foreach ($params as $param) {
+            $type = $param->getType();
+
+            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+                $dependencies[] = $this->resolve($type->getName());
+            } else {
+                throw new \Exception("Cannot resolve dependency: {$param->getName()}");
+            }
+        }
+
+        return $reflection->newInstanceArgs($dependencies);
     }
 }

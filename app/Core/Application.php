@@ -19,8 +19,23 @@ class Application
 
     public function init()
     {
-        $this->registerRoutes();
-        $this->loadModules();
+        $useCache = env('ROUTE_CACHE', false);
+
+        if ($useCache) {
+            if (!\App\Core\RouteCache::exists()) {
+                $this->registerRoutes();
+                $this->loadModules();
+
+                \App\Core\RouteCache::store($this->router->registeredRoutes);
+            }
+
+            $this->router->setCachedRoutes(
+                \App\Core\RouteCache::load()
+            );
+        } else {
+            $this->registerRoutes();
+            $this->loadModules();
+        }
     }
 
     protected function registerRoutes()
@@ -30,21 +45,29 @@ class Application
 
     protected function loadModules()
     {
-        $basePath = __DIR__.'/../Modules';
+        $cacheFile = __DIR__.'/../../storage/cache/module_paths.php';
 
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($basePath)
-        );
+        if (file_exists($cacheFile)) {
+            $files = require $cacheFile;
+        } else {
+            $basePath = __DIR__.'/../Modules';
 
-        $files = [];
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($basePath)
+            );
 
-        foreach ($iterator as $file) {
-            if ($file->isFile() && $file->getFilename() === 'Routes.php') {
-                $files[] = $file->getPathname();
+            $files = [];
+
+            foreach ($iterator as $file) {
+                if ($file->isFile() && $file->getFilename() === 'Routes.php') {
+                    $files[] = $file->getPathname();
+                }
             }
-        }
 
-        sort($files);
+            sort($files);
+
+            file_put_contents($cacheFile, '<?php return ' . var_export($files, true) . ';');
+        }
 
         foreach ($files as $route) {
             require $route;

@@ -8,6 +8,11 @@ class BaseModel extends Model
 {
     use SoftDeletes;
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+    }
+
     protected static function booted()
     {
         static::addGlobalScope('company', function ($query) {

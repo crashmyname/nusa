@@ -38,6 +38,22 @@ switch ($command) {
 
         MigrationGenerator::make($name);
         break;
+    case 'route:cache':
+        \App\Core\RouteCache::clear();
+
+        $app = require 'bootstrap/app.php';
+
+        $router = $app->router;
+        var_dump($router->registeredRoutes);
+
+        \App\Core\RouteCache::store($router->registeredRoutes);
+
+        echo "Route cache created successfully \n";
+        break;
+    case 'route:clear':
+        \App\Core\RouteCache::clear();
+        echo "Route cache cleared \n";
+        break;
     default:
         echo "Command not found";
 }

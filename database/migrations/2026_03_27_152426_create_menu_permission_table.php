@@ -7,8 +7,8 @@ return new class extends Migration {
     public function up()
     {
         $this->schema()->create('menu_permissions', function ($table) {
-            $table->foreginId('menu_id');
-            $table->foreginId('permission_id');
+            $table->foreignId('menu_id');
+            $table->foreignId('permission_id');
             $table->timestamps();
             $table->softDeletes();
         });

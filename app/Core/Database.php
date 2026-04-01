@@ -7,18 +7,24 @@ use Illuminate\Container\Container;
 
 class Database
 {
+    protected static $booted = false;
+
     public static function init()
     {
+        if (self::$booted) {
+            return;
+        }
+
         $capsule = new Capsule;
 
         $default = Config::get('database.default');
-
         $connection = Config::get("database.connections.$default");
 
         $capsule->addConnection($connection);
 
-        $capsule->setEventDispatcher(new Dispatcher(new Container));
         $capsule->setAsGlobal();
         $capsule->bootEloquent();
+
+        self::$booted = true;
     }
 }

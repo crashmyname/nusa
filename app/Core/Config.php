@@ -28,4 +28,9 @@ class Config
 
         return $config;
     }
+
+    public static function set(array $items)
+    {
+        self::$items = $items;
+    }
 }
